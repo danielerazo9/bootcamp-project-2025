@@ -1,9 +1,8 @@
-// src/app/blogData.ts
 export interface Blog {
   slug: string;
   title: string;
   date: string;
-  image: string;   // e.g. "/images/ts.png"
+  image: string;   // /images/ts.png etc.
   content: string; // short paragraph/preview
 }
 
@@ -27,3 +26,4 @@ const blogs: Blog[] = [
 ];
 
 export default blogs;
+

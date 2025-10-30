@@ -1,20 +1,17 @@
-/* src/components/navbar.module.css */
 .navbar {
   background-color: #222;
   color: white;
-  padding: 15px;
+  padding: 14px 20px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 
-/* 👇 scoped to the local .navbar class (valid for CSS Modules) */
-.navbar a {
+.navbar nav a {
   color: white;
-  margin-left: 15px;
   text-decoration: none;
+  margin-left: 16px;
 }
 
-.navbar a:hover {
-  text-decoration: underline;
-}
+.navbar nav a:hover { text-decoration: underline; }
+

@@ -11,28 +11,10 @@
   box-shadow: 0 6px 20px rgba(0,0,0,0.08);
 }
 
-.image {
-  width: 100%;
-  height: auto;
-  border-radius: 8px;
-  margin-bottom: 12px;
-}
+.image { width: 100%; height: auto; border-radius: 8px; margin-bottom: 12px; }
+.title { margin: 8px 0 4px; }
+.meta  { margin: 0 0 8px; color: #555; }
+.text  { margin: 0 0 12px; }
+.readMore { text-decoration: none; border-bottom: 1px dotted currentColor; }
 
-.title {
-  margin: 8px 0 4px;
-}
-
-.meta {
-  margin: 0 0 8px;
-  color: #555;
-}
-
-.text {
-  margin: 0 0 12px;
-}
-
-.readMore {
-  text-decoration: none;
-  border-bottom: 1px dotted currentColor;
-}
 
