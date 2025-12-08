@@ -1,31 +1,35 @@
-import mongoose, { Schema } from "mongoose";
+// src/database/blogSchema.ts
+import mongoose, { Schema, Model, Document } from "mongoose";
 
-// typescript type (can also be an interface)
-type Blog = {
-		title: string;
-	  slug: string; 
-		date: Date;
-		description: string; // for preview
-	  content: string; // text content for individual blog page
-	  image: string; // url for string in public
-	  image_alt: string; // alt for image
-		comments: IComment[]; // array for comments
-};
+export interface IBlog extends Document {
+  title: string;
+  slug: string;
+  date: Date;
+  description: string;
+  content: string;
+  image: string;
+  image_alt: string;
+}
 
+const blogSchema = new Schema<IBlog>(
+  {
+    title: { type: String, required: true },
+    slug: { type: String, required: true },
+    date: { type: Date, required: true },
+    description: { type: String, required: true },
+    content: { type: String, required: true },
+    image: { type: String, required: true },
+    image_alt: { type: String, required: true },
+  },
+  {
+    // This collection name must match what you see in Atlas: test.blogs
+    collection: "blogs",
+  }
+);
 
-// mongoose schema 
-const blogSchema = new Schema<Blog>({
-		title: { type: String, required: true },
-		slug: { type: String, required: true },
-		date: { type: Date, required: false, default: new Date()},
-		description: { type: String, required: true },
-		image: { type: String, required: true },
-	  image_alt: { type: String, required: true },
-		content: { type: String, required: true },
-})
+// Re-use the model in dev so Mongoose doesn’t complain
+const BlogModel: Model<IBlog> =
+  (mongoose.models.Blog as Model<IBlog>) ||
+  mongoose.model<IBlog>("Blog", blogSchema);
 
-// defining the collection and model
-const Blog = mongoose.models['blogs'] ||
-    mongoose.model('blogs', blogSchema);
-
-export default Blog;
+export default BlogModel;
