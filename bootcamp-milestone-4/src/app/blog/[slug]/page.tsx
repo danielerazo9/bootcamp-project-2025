@@ -1,56 +1,70 @@
+// src/app/blog/[slug]/page.tsx
 import Comment from "@/components/Comment";
+import connectDB from "@/database/db";
+import Blog from "@/database/blogSchema";
+
+export const dynamic = "force-dynamic";
 
 type Props = {
-  params: { slug: string };
+  params: {
+    slug: string;
+  };
 };
 
-// Fetch a single blog by slug (relative URL → works on Vercel)
 async function getBlog(slug: string) {
-  const res = await fetch(`/api/blogs/${slug}`, {
-    cache: "no-store",
-  });
+  await connectDB();
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch blog");
-  }
+  const doc = await Blog.findOne({ slug }).lean();
+  if (!doc) return null;
 
-  return res.json();
+  return {
+    _id: doc._id.toString(),
+    title: doc.title,
+    slug: doc.slug,
+    description: doc.description,
+    content: doc.content,
+    author: doc.author,
+    date: doc.date instanceof Date ? doc.date.toISOString() : doc.date,
+    comments: doc.comments ?? [],
+  };
 }
 
-export default async function BlogPage({ params }: Props) {
-  const { slug } = params;
-
+export default async function Blog({ params }: Props) {
+  const slug = params.slug;
   const blog = await getBlog(slug);
 
   if (!blog) {
     return (
-      <div className="max-w-3xl mx-auto mt-8">
-        <h1 className="text-2xl font-bold mb-4">Blog not found.</h1>
-        <p>We couldn’t find a blog with that slug.</p>
-      </div>
+      <main style={{ width: "80%", margin: "24px auto" }}>
+        <h1 className="max-w-2xl mx-auto">Blog not found</h1>
+        <p>We couldn&apos;t find a blog with that slug.</p>
+      </main>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto mt-8">
+    <main className="max-w-2xl mx-auto mt-8">
       {/* Title */}
       <h1 className="text-3xl font-bold mb-4">{blog.title}</h1>
 
-      {/* Date */}
-      {blog.date && (
-        <p className="text-gray-600 mb-4">
-          {new Date(blog.date).toLocaleDateString()}
-        </p>
-      )}
-
-      {/* Description / Content */}
-      <div className="whitespace-pre-wrap mb-8">
-        {blog.description}
+      {/* Date & author */}
+      <div className="text-sm text-gray-600 mb-4">
+        {blog.date && (
+          <span>
+            {new Date(blog.date).toLocaleDateString()}{" "}
+            {blog.author ? `• ${blog.author}` : null}
+          </span>
+        )}
       </div>
 
-      {/* Comments */}
-      <Comment slug={slug} initialComments={blog.comments ?? []} />
-    </div>
+      {/* Description / content */}
+      <div className="whitespace-pre-wrap mb-8">
+        {blog.content ?? blog.description}
+      </div>
+
+      {/* Comments (still using your Comment component + API) */}
+      {/* If your Comment component props differ, adjust this line */}
+      <Comment slug={blog.slug} initialComments={blog.comments ?? []} />
+    </main>
   );
 }
-
