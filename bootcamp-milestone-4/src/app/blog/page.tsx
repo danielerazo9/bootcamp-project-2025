@@ -1,29 +1,41 @@
-// src/app/blog/page.tsx
-import connectDB from "@/database/db";
-import Blog from "@/database/blogSchema";
-import BlogPreview from "@/components/BlogPreview";
+// bootcamp-milestone-4/src/app/blog/page.tsx
+
+import connectDB from "@/database/db";              // if your function is called `connect`, change this import
+import Blog from "@/database/blogSchema";          // your Mongoose Blog model
+import BlogPreview from "@/components/blogPreview"; // existing component from earlier milestones
 
 export const dynamic = "force-dynamic";
 
-async function getBlogs() {
+type BlogPreviewProps = {
+  _id: string;
+  slug: string;
+  title: string;
+  description: string;
+  author?: string;
+  date?: string;
+  image?: string;
+};
+
+// Fetch all blogs directly from MongoDB (no fetch(), no localhost)
+async function getBlogs(): Promise<BlogPreviewProps[]> {
   await connectDB();
 
-  // Get all blogs from MongoDB
-  const blogs = await Blog.find().sort({ createdAt: -1 }).lean();
+  const docs = await Blog.find({})
+    .sort({ createdAt: -1 })
+    .lean();
 
-  // Normalize data for React
-  return blogs.map((b: any) => ({
-    _id: b._id.toString(),
-    title: b.title,
-    slug: b.slug,
-    description: b.description,
-    author: b.author,
-    date: b.date instanceof Date ? b.date.toISOString() : b.date,
-    image: b.image,
+  return docs.map((doc: any) => ({
+    _id: doc._id.toString(),
+    slug: doc.slug,
+    title: doc.title,
+    description: doc.description,
+    author: doc.author,
+    date: doc.date ? doc.date.toISOString() : undefined,
+    image: doc.image,
   }));
 }
 
-export default async function BlogIndex() {
+export default async function BlogIndexPage() {
   const blogs = await getBlogs();
 
   if (!blogs || blogs.length === 0) {
@@ -44,10 +56,11 @@ export default async function BlogIndex() {
           display: "grid",
           gap: 24,
           gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          marginTop: "1.5rem",
         }}
       >
-        {blogs.map((b: any) => (
-          <BlogPreview key={b.slug} blog={b} />
+        {blogs.map((blog) => (
+          <BlogPreview key={blog.slug} blog={blog} />
         ))}
       </div>
     </main>

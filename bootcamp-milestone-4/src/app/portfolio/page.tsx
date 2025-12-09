@@ -12,9 +12,10 @@ type Project = {
 };
 
 async function getProjects(): Promise<Project[]> {
-  const res = await fetch("http://localhost:3000/api/projects", {
-    cache: "no-store", // always get fresh data while developing
-  });
+  const res = await fetch("/api/projects", {
+  cache: "no-store",
+});
+
 
   if (!res.ok) {
     throw new Error("Failed to fetch projects");

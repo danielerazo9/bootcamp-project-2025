@@ -1,43 +1,58 @@
-// src/app/blog/[slug]/page.tsx
-import Comment from "@/components/Comment";
-import connectDB from "@/database/db";
+// bootcamp-milestone-4/src/app/blog/[slug]/page.tsx
+
+import connectDB from "@/database/db";       // same note as above if the function name differs
 import Blog from "@/database/blogSchema";
+import Comment from "@/components/Comment";
 
 export const dynamic = "force-dynamic";
 
-type Props = {
+type Params = {
   params: {
     slug: string;
   };
 };
 
-async function getBlog(slug: string) {
+type BlogDoc = {
+  _id: string;
+  slug: string;
+  title: string;
+  description: string;
+  content?: string;
+  author?: string;
+  date?: string;
+  image?: string;
+  comments?: any[];
+};
+
+// Load a single blog directly from MongoDB
+async function getBlog(slug: string): Promise<BlogDoc | null> {
   await connectDB();
 
-  const doc = await Blog.findOne({ slug }).lean();
+  const doc: any = await Blog.findOne({ slug }).lean();
   if (!doc) return null;
 
   return {
     _id: doc._id.toString(),
-    title: doc.title,
     slug: doc.slug,
+    title: doc.title,
     description: doc.description,
     content: doc.content,
     author: doc.author,
-    date: doc.date instanceof Date ? doc.date.toISOString() : doc.date,
+    date: doc.date ? doc.date.toISOString() : undefined,
+    image: doc.image,
     comments: doc.comments ?? [],
   };
 }
 
-export default async function Blog({ params }: Props) {
-  const slug = params.slug;
+export default async function BlogPage({ params }: Params) {
+  const { slug } = params;
   const blog = await getBlog(slug);
 
   if (!blog) {
     return (
       <main style={{ width: "80%", margin: "24px auto" }}>
-        <h1 className="max-w-2xl mx-auto">Blog not found</h1>
-        <p>We couldn&apos;t find a blog with that slug.</p>
+        <h1>Blog not found</h1>
+        <p>We couldn’t find a blog with that slug.</p>
       </main>
     );
   }
@@ -47,12 +62,12 @@ export default async function Blog({ params }: Props) {
       {/* Title */}
       <h1 className="text-3xl font-bold mb-4">{blog.title}</h1>
 
-      {/* Date & author */}
+      {/* Date + Author */}
       <div className="text-sm text-gray-600 mb-4">
         {blog.date && (
           <span>
-            {new Date(blog.date).toLocaleDateString()}{" "}
-            {blog.author ? `• ${blog.author}` : null}
+            {new Date(blog.date).toLocaleDateString()}
+            {blog.author ? ` · ${blog.author}` : ""}
           </span>
         )}
       </div>
@@ -62,9 +77,11 @@ export default async function Blog({ params }: Props) {
         {blog.content ?? blog.description}
       </div>
 
-      {/* Comments (still using your Comment component + API) */}
-      {/* If your Comment component props differ, adjust this line */}
-     {/* <Comment slug={blog.slug} initialComments={blog.comments ?? []} /> */}
+      {/* Comments – still using your existing Comment component */}
+      <Comment
+        slug={blog.slug}
+        initialComments={blog.comments ?? []}
+      />
     </main>
   );
 }
