@@ -64,7 +64,7 @@ export default async function Blog({ params }: Props) {
 
       {/* Comments (still using your Comment component + API) */}
       {/* If your Comment component props differ, adjust this line */}
-      <Comment slug={blog.slug} initialComments={blog.comments ?? []} />
+     {/* <Comment slug={blog.slug} initialComments={blog.comments ?? []} /> */}
     </main>
   );
 }
