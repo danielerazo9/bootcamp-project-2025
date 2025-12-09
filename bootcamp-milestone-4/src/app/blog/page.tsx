@@ -4,17 +4,17 @@ import BlogPreview from "@/components/blogPreview";
 
 // Fetch all blogs from MongoDB before rendering the page
 async function getBlogs() {
-  await connectDB();
+  const res = await fetch(`/api/blogs`, {
+    cache: "no-store",
+  });
 
-  try {
-    // return *plain objects* instead of Mongoose documents
-    const blogs = await Blog.find().sort({ date: -1 }).lean();
-    return blogs;
-  } catch (err) {
-    console.error("Failed to fetch blogs:", err);
-    return null;
+  if (!res.ok) {
+    throw new Error("Failed to fetch blogs");
   }
+
+  return res.json();
 }
+
 
 
 export default async function BlogIndex() {
