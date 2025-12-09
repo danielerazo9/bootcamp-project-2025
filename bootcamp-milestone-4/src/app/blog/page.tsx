@@ -1,8 +1,8 @@
 // bootcamp-milestone-4/src/app/blog/page.tsx
 
-import connectDB from "@/database/db";              // if your function is called `connect`, change this import
-import Blog from "@/database/blogSchema";          // your Mongoose Blog model
-import BlogPreview from "@/components/blogPreview"; // existing component from earlier milestones
+import connectDB from "@/database/db";          // your DB connection helper
+import Blog from "@/database/blogSchema";       // your Mongoose Blog model
+import BlogPreview from "@/components/blogPreview"; // note: lower-case "blogPreview"
 
 export const dynamic = "force-dynamic";
 
@@ -10,13 +10,13 @@ type BlogPreviewProps = {
   _id: string;
   slug: string;
   title: string;
-  description: string;
+  description?: string;
   author?: string;
   date?: string;
   image?: string;
 };
 
-// Fetch all blogs directly from MongoDB (no fetch(), no localhost)
+// Fetch all blogs directly from MongoDB (no fetch, no localhost)
 async function getBlogs(): Promise<BlogPreviewProps[]> {
   await connectDB();
 
@@ -28,10 +28,10 @@ async function getBlogs(): Promise<BlogPreviewProps[]> {
     _id: doc._id.toString(),
     slug: doc.slug,
     title: doc.title,
-    description: doc.description,
-    author: doc.author,
-    date: doc.date ? doc.date.toISOString() : undefined,
-    image: doc.image,
+    description: doc.description ?? "",
+    author: doc.author ?? "",
+    date: doc.date ? new Date(doc.date).toISOString() : "",
+    image: doc.image ?? "",
   }));
 }
 
@@ -50,13 +50,11 @@ export default async function BlogIndexPage() {
   return (
     <main style={{ width: "80%", margin: "24px auto" }}>
       <h1>Blogs</h1>
-
       <div
         style={{
           display: "grid",
           gap: 24,
           gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          marginTop: "1.5rem",
         }}
       >
         {blogs.map((blog) => (
@@ -66,3 +64,4 @@ export default async function BlogIndexPage() {
     </main>
   );
 }
+
