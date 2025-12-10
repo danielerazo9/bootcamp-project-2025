@@ -1,57 +1,36 @@
-import { NextRequest, NextResponse } from "next/server";
+// src/app/api/projects/route.ts
+import { NextResponse } from "next/server";
 import connectDB from "@/database/db";
 import Project from "@/database/projectSchema";
 
-interface RouteContext {
-  params: Promise<{ slug: string }>;
-}
-
-export async function POST(
-  req: NextRequest,
-  context: RouteContext
-) {
+export async function GET() {
   try {
     await connectDB();
 
-    const { slug } = await context.params;
-    console.log("API POST /api/projects slug =", slug);
+    const docs = await Project.find().sort({ date: -1 }).lean();
 
-    const { name, text } = await req.json();
+    const projects = docs.map((doc: any) => ({
+      _id: doc._id.toString(),
+      slug: doc.slug,
+      title: doc.title,
+      description: doc.description,
+      tech: doc.tech ?? [],
+      image: doc.image ?? "",
+      date: doc.date ? doc.date.toISOString().split("T")[0] : "",
+      comments: (doc.comments ?? []).map((c: any) => ({
+        _id: c._id?.toString?.() ?? "",
+        name: c.name,
+        text: c.text,
+        createdAt: c.createdAt?.toISOString?.() ?? "",
+      })),
+    }));
 
-    if (!name?.trim() || !text?.trim()) {
-      return NextResponse.json(
-        { message: "Name and comment are required" },
-        { status: 400 }
-      );
-    }
-
-    const project = await Project.findOne({ slug });
-
-    if (!project) {
-      return NextResponse.json(
-        { message: "Project not found" },
-        { status: 404 }
-      );
-    }
-
-    project.comments.push({
-      name: name.trim(),
-      text: text.trim(),
-      createdAt: new Date(),
-    });
-
-    await project.save();
-
-    // send back updated comments
-    return NextResponse.json({ comments: project.comments });
+    return NextResponse.json({ projects });
   } catch (error) {
-    console.error("Error in POST /api/projects/[slug]", error);
+    console.error("Error in GET /api/projects", error);
     return NextResponse.json(
-      { message: "Server error" },
+      { message: "Server error fetching projects" },
       { status: 500 }
     );
   }
 }
-
-
-
