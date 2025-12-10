@@ -12,6 +12,7 @@ export default function Navbar() {
         <Link href="/resume">Resume</Link>
         <Link href="/about">About</Link>
         <Link href="/contact">Contact</Link>
+        <Link href="/portfolio">Portfolio</Link>
       </nav>
     </header>
   );

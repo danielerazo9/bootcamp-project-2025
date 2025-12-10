@@ -1,20 +1,57 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/database/db";
-import ProjectModel from "@/database/projectSchema";
+import Project from "@/database/projectSchema";
 
-export async function GET(req: NextRequest) {
+interface RouteContext {
+  params: Promise<{ slug: string }>;
+}
+
+export async function POST(
+  req: NextRequest,
+  context: RouteContext
+) {
   try {
     await connectDB();
 
-    const projects = await ProjectModel.find().sort({ date: -1 }).lean();
+    const { slug } = await context.params;
+    console.log("API POST /api/projects slug =", slug);
 
-    return NextResponse.json(projects, { status: 200 });
-  } catch (err) {
-    console.error("Error in GET /api/projects:", err);
+    const { name, text } = await req.json();
+
+    if (!name?.trim() || !text?.trim()) {
+      return NextResponse.json(
+        { message: "Name and comment are required" },
+        { status: 400 }
+      );
+    }
+
+    const project = await Project.findOne({ slug });
+
+    if (!project) {
+      return NextResponse.json(
+        { message: "Project not found" },
+        { status: 404 }
+      );
+    }
+
+    project.comments.push({
+      name: name.trim(),
+      text: text.trim(),
+      createdAt: new Date(),
+    });
+
+    await project.save();
+
+    // send back updated comments
+    return NextResponse.json({ comments: project.comments });
+  } catch (error) {
+    console.error("Error in POST /api/projects/[slug]", error);
     return NextResponse.json(
-      { message: "Server error while fetching projects" },
+      { message: "Server error" },
       { status: 500 }
     );
   }
 }
+
+
 

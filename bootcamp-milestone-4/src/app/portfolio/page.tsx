@@ -1,81 +1,74 @@
 // src/app/portfolio/page.tsx
+import Link from "next/link";
+import connectDB from "@/database/db";
+import Project from "@/database/projectSchema";
 
-type Project = {
+type ProjectListItem = {
   _id: string;
   slug: string;
   title: string;
-  date: string;
   description: string;
   tech: string[];
-  link: string;
   image: string;
+  date: string;
 };
 
-async function getProjects(): Promise<Project[]> {
-  const res = await fetch("/api/projects", {
-  cache: "no-store",
-});
+async function getProjects(): Promise<ProjectListItem[]> {
+  await connectDB();
 
+  const docs = await Project.find().sort({ date: -1 }).lean();
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch projects");
-  }
-
-  return res.json();
+  return docs.map((doc: any) => ({
+    _id: doc._id.toString(),
+    slug: doc.slug,
+    title: doc.title,
+    description: doc.description,
+    tech: doc.tech ?? [],
+    image: doc.image,
+    date: doc.date ? doc.date.toISOString().slice(0, 10) : "",
+  }));
 }
 
 export default async function PortfolioPage() {
   const projects = await getProjects();
 
   return (
-    <main style={{ padding: "2rem" }}>
+    <main style={{ maxWidth: "900px", margin: "0 auto", padding: "1.5rem" }}>
       <h1>Portfolio</h1>
-      <p>Projects loaded from my MongoDB database.</p>
+      <p>Here are some of the projects I&apos;ve worked on.</p>
 
-      <div
-        style={{
-          display: "grid",
-          gap: "1.5rem",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          marginTop: "1.5rem",
-        }}
-      >
+      <section style={{ marginTop: "1.5rem" }}>
         {projects.map((project) => (
           <article
             key={project._id}
             style={{
-              border: "1px solid #444",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
               padding: "1rem",
-              borderRadius: "0.5rem",
-              background: "#111",
+              marginBottom: "1rem",
             }}
           >
-            <h2>{project.title}</h2>
-            <p style={{ fontSize: "0.9rem", opacity: 0.8 }}>
-              {new Date(project.date).toLocaleDateString()}
-            </p>
+            <h2>
+              <Link href={`/portfolio/${project.slug}`}>{project.title}</Link>
+            </h2>
+
+            <p style={{ marginTop: "0.5rem" }}>{project.date}</p>
 
             <p style={{ marginTop: "0.5rem" }}>{project.description}</p>
 
-            <p style={{ marginTop: "0.5rem", fontSize: "0.9rem" }}>
-              <strong>Tech:</strong> {project.tech.join(" • ")}
-            </p>
+            {project.tech.length > 0 && (
+              <p style={{ marginTop: "0.5rem" }}>
+                <strong>Tech:</strong> {project.tech.join(", ")}
+              </p>
+            )}
 
-            <a
-              href={project.link}
-              target="_blank"
-              rel="noreferrer"
-              style={{
-                display: "inline-block",
-                marginTop: "0.75rem",
-                textDecoration: "underline",
-              }}
-            >
-              View project →
-            </a>
+            <p style={{ marginTop: "0.5rem" }}>
+              <Link href={`/portfolio/${project.slug}`}>Read more &rarr;</Link>
+            </p>
           </article>
         ))}
-      </div>
+      </section>
     </main>
   );
 }
+
