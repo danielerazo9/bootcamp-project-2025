@@ -1,55 +1,19 @@
+// app/api/blogs/[slug]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/database/db";
 import Blog from "@/database/blogSchema";
 
-type RouteParams = {
-  params: Promise<{
-    slug: string;
-  }>;
-};
-
-// GET /api/blogs/:slug  -> return a single blog
-export async function GET(
-  _req: NextRequest,
-  { params }: RouteParams
-) {
-  await connectDB();
-
-  // ✅ unwrap the params promise
-  const { slug } = await params;
-  console.log("DEBUG /api/blogs/[slug] requestedSlug =", slug);
-
-  try {
-    const blog = await Blog.findOne({ slug });
-
-    if (!blog) {
-      console.log(
-        "DEBUG available slugs in DB =",
-        await Blog.find().distinct("slug")
-      );
-      return NextResponse.json({ message: "Blog not found" }, { status: 404 });
-    }
-
-    return NextResponse.json(blog);
-  } catch (err) {
-    console.error("Error in GET /api/blogs/[slug]", err);
-    return NextResponse.json(
-      { message: "Failed to fetch blog" },
-      { status: 500 }
-    );
-  }
+interface RouteContext {
+  params: Promise<{ slug: string }>;
 }
 
-// POST /api/blogs/:slug  -> add a comment to that blog
-export async function POST(
-  req: NextRequest,
-  { params }: RouteParams
-) {
-  await connectDB();
-
-  const { slug } = await params; // ✅ unwrap again
-
+export async function POST(req: NextRequest, { params }: RouteContext) {
   try {
+    await connectDB();
+
+    const { slug } = await params;
+    console.log("API POST /api/blogs slug =", slug);
+
     const { name, text } = await req.json();
 
     if (!name?.trim() || !text?.trim()) {
@@ -59,29 +23,45 @@ export async function POST(
       );
     }
 
-    const blog = await Blog.findOne({ slug });
+    // 🔹 Push the comment without using blog.save()
+    const updatedBlog = await Blog.findOneAndUpdate(
+      { slug },
+      {
+        $push: {
+          comments: {
+            name: name.trim(),
+            text: text.trim(),
+            createdAt: new Date(),
+          },
+        },
+      },
+      {
+        new: true,          // return the updated document
+        runValidators: false, // extra safety: don't validate whole blog
+      }
+    );
 
-    if (!blog) {
-      return NextResponse.json({ message: "Blog not found" }, { status: 404 });
+    if (!updatedBlog) {
+      return NextResponse.json(
+        { message: "Blog not found" },
+        { status: 404 }
+      );
     }
 
-    blog.comments.push({
-      name: name.trim(),
-      text: text.trim(),
-      createdAt: new Date(),
-    });
-
-    await blog.save();
-
-    // return the updated blog (with comments)
-    return NextResponse.json(blog);
+    // return updated blog (including comments)
+    return NextResponse.json(updatedBlog);
   } catch (err) {
     console.error("Error in POST /api/blogs/[slug]", err);
     return NextResponse.json(
-      { message: "Failed to post comment" },
+      { message: "Something went wrong on the server" },
       { status: 500 }
     );
   }
 }
+
+
+
+
+
 
 
